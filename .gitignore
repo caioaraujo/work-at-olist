@@ -7,4 +7,4 @@
 *.log
 .env
 tmp
-db.sqlite3
+*.sqlite3

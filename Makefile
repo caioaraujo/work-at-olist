@@ -9,3 +9,13 @@ run-server:
 
 code-convention:
 	flake8
+
+collect-static:
+	python manage.py collectstatic
+
+migrations:
+	python manage.py makemigrations
+
+test:
+	python manage.py migrate --settings=callcalculator.settings.testing
+	python manage.py test --settings=callcalculator.settings.testing
