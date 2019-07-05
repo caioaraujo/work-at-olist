@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='CallRecord',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('type', models.CharField(choices=[('START', 'Start'), ('STOP', 'Stop')], max_length=5)),
+                ('type', models.CharField(choices=[('START', 'Start'), ('END', 'End')], max_length=5)),
                 ('timestamp', models.DateTimeField(auto_now_add=True)),
                 ('call_id', models.PositiveIntegerField()),
                 ('source', models.CharField(max_length=11)),

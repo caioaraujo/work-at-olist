@@ -4,7 +4,7 @@ from django.db import models
 class CallRecord(models.Model):
 
     TYPE_CHOICES = [('START', 'Start'),
-                    ('STOP', 'Stop')]
+                    ('END', 'End')]
 
     id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=5, choices=TYPE_CHOICES)

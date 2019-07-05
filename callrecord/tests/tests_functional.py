@@ -7,8 +7,8 @@ class CallStartRecordAPITests(APITestCase):
 
     @freeze_time('2012-01-02 08:27')
     def test_post__success(self):
-        source = '9999999'
-        destination = '1111111'
+        source = '9999999999'
+        destination = '11111111111'
 
         data = {'source': source, 'destination': destination}
         response = self.client.post('/call-record/start/', data)
@@ -24,3 +24,11 @@ class CallStartRecordAPITests(APITestCase):
 
         call_timestamp = obtained_data['timestamp'].split('T')[0]
         self.assertEqual(call_timestamp, '2012-01-02')
+
+    def test_post__not_acceptable(self):
+        data = {'destination': '1111111111'}
+        response = self.client.post('/call-record/start/', data)
+
+        self.assertEqual(status.HTTP_406_NOT_ACCEPTABLE,
+                         response.status_code)
+        self.assertEqual(response.data['detail'], 'Source is required')

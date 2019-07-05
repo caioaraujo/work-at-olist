@@ -19,8 +19,8 @@ class CallStartRecordView(GenericAPIView):
 
         # Extract all request parameters
         request_data = request.data
-        source = request_data['source']
-        destination = request_data['destination']
+        source = request_data.get('source')
+        destination = request_data.get('destination')
 
         data = CallRecordService().insert(self.TYPE, source, destination)
         serializer = CallStartRecordSerializer(data)
