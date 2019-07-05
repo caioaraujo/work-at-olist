@@ -7,7 +7,7 @@ from .fixtures import Fixtures
 
 class CallStartRecordAPITests(APITestCase):
 
-    @freeze_time('2012-01-02 08:27')
+    @freeze_time('2012-01-02 12:44:59')
     def test_post__success(self):
         source = '9999999999'
         destination = '11111111111'
@@ -24,8 +24,11 @@ class CallStartRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
 
-        call_timestamp = obtained_data['timestamp'].split('T')[0]
-        self.assertEqual(call_timestamp, '2012-01-02')
+        timestamp = obtained_data['timestamp'].split('T')
+        call_date = timestamp[0]
+        self.assertEqual(call_date, '2012-01-02')
+        call_time = timestamp[1]
+        self.assertEqual(call_time, '12:44:59')
 
     def test_post__not_acceptable(self):
         data = {'destination': '1111111111'}
@@ -38,7 +41,7 @@ class CallStartRecordAPITests(APITestCase):
 
 class CallEndRecordAPITests(APITestCase):
 
-    @freeze_time('2012-01-02 08:27')
+    @freeze_time('2012-01-02 08:27:13')
     def test_post__success(self):
         # Install fixtures
         Fixtures.create_call_record_fixtures()
@@ -58,8 +61,11 @@ class CallEndRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
 
-        call_timestamp = obtained_data['timestamp'].split('T')[0]
-        self.assertEqual(call_timestamp, '2012-01-02')
+        timestamp = obtained_data['timestamp'].split('T')
+        call_date = timestamp[0]
+        self.assertEqual(call_date, '2012-01-02')
+        call_time = timestamp[1]
+        self.assertEqual(call_time, '08:27:13')
 
     def test_post__not_acceptable(self):
         data = {'source': '1111111111', 'destination': '1111111111'}

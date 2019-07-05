@@ -12,6 +12,7 @@ class CallRecord(models.Model):
     call_id = models.PositiveIntegerField()
     source = models.CharField(max_length=11)
     destination = models.CharField(max_length=11)
+    price = models.DecimalField(max_digits=13, decimal_places=2, null=True)
 
     class Meta:
         db_table = 'call_record'

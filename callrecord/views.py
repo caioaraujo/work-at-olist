@@ -47,7 +47,13 @@ class CallEndRecordView(GenericAPIView):
         source = request_data.get('source')
         destination = request_data.get('destination')
 
-        data = CallRecordService().insert(self.TYPE, source, destination)
+        service = CallRecordService()
+
+        # Save the call record
+        data = service.insert(self.TYPE, source, destination)
+        # Calculate the call price
+        data.price = service.calculate_call_price(data.call_id)
+
         serializer = CallRecordSerializer(data)
 
         result = {'detail': 'Call end recorded successfully!',
