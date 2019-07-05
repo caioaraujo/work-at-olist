@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import CallRecord
 
 
-class CallStartRecordSerializer(serializers.ModelSerializer):
+class CallRecordSerializer(serializers.ModelSerializer):
 
     source = serializers.CharField(
         help_text='A numeric string representing the source phone number',

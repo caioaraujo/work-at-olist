@@ -1,4 +1,4 @@
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, APIException
 
 from .models import CallRecord
 
@@ -58,6 +58,12 @@ class CallRecordService:
                         .values_list('call_id', flat=True)
                         .filter(source=source, destination=destination)
                         .order_by('id').last())
+
+        if not last_call_id:
+            raise APIException(
+                detail=f'Start record not found for source {source} '
+                       f'and destination {destination}')
+
         return last_call_id
 
     def _validate_phone_number(self, phone_number, origin):

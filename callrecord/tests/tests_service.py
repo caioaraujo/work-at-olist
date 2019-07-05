@@ -1,5 +1,5 @@
 from django.test import TestCase, SimpleTestCase
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, APIException
 
 from ..services import CallRecordService
 from .fixtures import Fixtures
@@ -34,17 +34,29 @@ class TestCallRecordService(TestCase):
             call_record_type, source, destination)
         self.assertEqual(21, call_id)
 
-    def test_get_call_id__call_type_stop(self):
+    def test_get_call_id__call_type_end(self):
         # Install fixtures
         Fixtures.create_call_record_fixtures()
 
-        call_record_type = 'STOP'
-        source = '11111'
-        destination = '22222'
+        call_record_type = 'END'
+        source = '1111111111'
+        destination = '2222222222'
 
         call_id = self.service._get_call_id(
             call_record_type, source, destination)
         self.assertEqual(9, call_id)
+
+    def test_get_call_id__start_call_not_found(self):
+        call_record_type = 'END'
+        source = '1111111111'
+        destination = '2222222222'
+
+        with self.assertRaisesMessage(
+                APIException,
+                'Start record not found for source 1111111111 '
+                'and destination 2222222222'):
+            self.service._get_call_id(
+                call_record_type, source, destination)
 
 
 class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
