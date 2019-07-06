@@ -51,8 +51,6 @@ class CallEndRecordView(GenericAPIView):
 
         # Save the call record
         data = service.insert(self.TYPE, source, destination)
-        # Calculate the call price
-        data.price = service.calculate_call_price(data.call_id)
 
         serializer = CallRecordSerializer(data)
 

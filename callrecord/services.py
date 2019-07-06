@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.utils import timezone
 from rest_framework.exceptions import NotAcceptable, APIException
 
 from .models import CallRecord
@@ -35,10 +36,17 @@ class CallRecordService:
                 detail='Source and destination must be different')
 
         call_id = self._get_call_id(call_record_type, source, destination)
+        timestamp = timezone.now()
+
+        price = None
+        if self.END == call_record_type:
+            # Calculate the call price if its the end record
+            price = self._calculate_call_price(call_id, timestamp)
 
         call_record = CallRecord(
             call_id=call_id, type=call_record_type,
-            source=source, destination=destination)
+            source=source, destination=destination,
+            timestamp=timestamp, price=price)
 
         call_record.save()
 
@@ -95,12 +103,13 @@ class CallRecordService:
             raise NotAcceptable(
                 detail=f'{origin} must have a maximum of 11 numbers')
 
-    def calculate_call_price(self, call_id):
+    def _calculate_call_price(self, call_id, timestamp_end):
         """
         Calculate the call price
 
         Args:
             call_id: id which represents both start and end call
+            timestamp_end: the timestamp from the end of the call
 
         Returns: The price in float
 
@@ -109,29 +118,30 @@ class CallRecordService:
         # Find the timestamp of the call start record
         timestamp_start = self._get_call_timestamp(call_id, self.START)
 
-        # Find the timestamp of the call end record
-        timestamp_end = self._get_call_timestamp(call_id, self.END)
-
         # Find the total of minutes between these dates
         diff_time = timestamp_end - timestamp_start
-        charged_minutes = diff_time.seconds//60
+        total_minutes = diff_time.seconds // 60
 
         # Set zero to seconds from both dates
-        timestamp_start = timestamp_start.replace(second=0, microsecond=0)
-        timestamp_end = timestamp_end.replace(second=0, microsecond=0)
+        timestamp_start = self._set_zero_to_seconds(timestamp_start)
+        timestamp_end = self._set_zero_to_seconds(timestamp_end)
 
-        while timestamp_start != timestamp_end:
+        while timestamp_start <= timestamp_end:
 
             if timestamp_start.hour > 21 or timestamp_start.hour < 6:
-                # Unconsider the current minute if it is in the
-                # reduced tariff time call (22pm to 5:59am)
-                charged_minutes -= 1
+                # Removes the minute if the interval is between
+                # the non-charged time (22h00 and 5h59)
+                total_minutes -= 1
             # Increment one minute do timestamp_start
             timestamp_start = timestamp_start + timedelta(minutes=1)
 
-        # Return the final price
-        return charged_minutes * self.CHARGE_MINUTE + self.STANDING_CHARGE
+        price = total_minutes * self.CHARGE_MINUTE + self.STANDING_CHARGE
+        return round(price, ndigits=2)
+
+    def _set_zero_to_seconds(self, timestamp):
+        return timestamp.replace(second=0, microsecond=0)
 
     def _get_call_timestamp(self, call_id, call_type):
+        # Get the timestamp of the call by its call id and type (start/end)
         return (CallRecord.objects.values_list('timestamp', flat=True)
                 .get(call_id=call_id, type=call_type))

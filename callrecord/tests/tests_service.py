@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.test import TestCase, SimpleTestCase
 from rest_framework.exceptions import NotAcceptable, APIException
 
@@ -27,12 +29,12 @@ class TestCallRecordService(TestCase):
         Fixtures.create_call_record_fixtures()
 
         call_record_type = 'START'
-        source = '22222'
-        destination = '11111'
+        source = '2222222222'
+        destination = '1111111111'
 
         call_id = self.service._get_call_id(
             call_record_type, source, destination)
-        self.assertEqual(21, call_id)
+        self.assertEqual(25, call_id)
 
     def test_get_call_id__call_type_end(self):
         # Install fixtures
@@ -57,6 +59,42 @@ class TestCallRecordService(TestCase):
                 'and destination 2222222222'):
             self.service._get_call_id(
                 call_record_type, source, destination)
+
+    def test_calculate_call_price__between_tariff_periods(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        timestamp_end = datetime(2012, 1, 2, 22, 17, 53)
+        price = self.service._calculate_call_price(
+            call_id=21, timestamp_end=timestamp_end)
+        self.assertEqual(price, 0.54)
+
+    def test_calculate_call_price__less_than_one_minute(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        timestamp_end = datetime(2012, 1, 2, 7, 10, 59)
+        price = self.service._calculate_call_price(
+            call_id=22, timestamp_end=timestamp_end)
+        self.assertEqual(price, 0.36)
+
+    def test_calculate_call_price__exactly_one_minute(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        timestamp_end = datetime(2012, 1, 2, 7, 11, 2)
+        price = self.service._calculate_call_price(
+            call_id=23, timestamp_end=timestamp_end)
+        self.assertEqual(price, 0.45)
+
+    def test_calculate_call_price__over_one_minute(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        timestamp_end = datetime(2012, 1, 2, 7, 12, 1)
+        price = self.service._calculate_call_price(
+            call_id=24, timestamp_end=timestamp_end)
+        self.assertEqual(price, 0.45)
 
 
 class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
