@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from rest_framework.exceptions import NotAcceptable, APIException
 
 from .models import CallRecord
@@ -9,6 +11,8 @@ class CallRecordService:
     DESTINATION = 'Destination'
     START = 'START'
     END = 'END'
+    STANDING_CHARGE = 0.36
+    CHARGE_MINUTE = 0.09
 
     def insert(self, call_record_type, source, destination):
         """
@@ -108,9 +112,25 @@ class CallRecordService:
         # Find the timestamp of the call end record
         timestamp_end = self._get_call_timestamp(call_id, self.END)
 
-        # Calculate
+        # Find the total of minutes between these dates
+        diff_time = timestamp_end - timestamp_start
+        charged_minutes = diff_time.seconds//60
 
-        pass
+        # Set zero to seconds from both dates
+        timestamp_start = timestamp_start.replace(second=0, microsecond=0)
+        timestamp_end = timestamp_end.replace(second=0, microsecond=0)
+
+        while timestamp_start != timestamp_end:
+
+            if timestamp_start.hour > 21 or timestamp_start.hour < 6:
+                # Unconsider the current minute if it is in the
+                # reduced tariff time call (22pm to 5:59am)
+                charged_minutes -= 1
+            # Increment one minute do timestamp_start
+            timestamp_start = timestamp_start + timedelta(minutes=1)
+
+        # Return the final price
+        return charged_minutes * self.CHARGE_MINUTE + self.STANDING_CHARGE
 
     def _get_call_timestamp(self, call_id, call_type):
         return (CallRecord.objects.values_list('timestamp', flat=True)

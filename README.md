@@ -1,6 +1,22 @@
 # Call Calculator
 
-This REST api records phone calls and provide billings.
+This REST api records phone calls (start and end) from source to destination, calculating the call prince in the end,
+and it provides billings per year or month.
+
+## Environment used to run this project
+
+Computer: Samsung Expert - 16GB RAM - intel core i7
+
+OS: Ubuntu 18.04.2 LTS 64 bits
+
+IDE: Pycharm Community Edition 2019.1.3
+
+Libraries: 
+- Python 3.6.8 with pip 19.1.1
+- Pipenv 2018.11.26
+- Django 2.2.3
+- Django REST Framework 3.9.4
+
 
 ## API Docs
 
@@ -70,7 +86,3 @@ This project uses flake8 checking. Install all development dependencies and run:
 or
 
 `make code-convention`
-
-## Author
-
-**Caio Araujo** - (https://github.com/caioaraujo)

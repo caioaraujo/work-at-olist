@@ -23,6 +23,7 @@ class CallStartRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['type'], 'START')
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
+        self.assertIsNone(obtained_data['price'])
 
         timestamp = obtained_data['timestamp'].split('T')
         call_date = timestamp[0]
@@ -60,6 +61,7 @@ class CallEndRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['type'], 'END')
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
+        self.assertEqual(obtained_data['price'], '13.50')
 
         timestamp = obtained_data['timestamp'].split('T')
         call_date = timestamp[0]
