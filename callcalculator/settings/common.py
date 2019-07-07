@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
     # Project apps
     'callrecord.apps.CallRecordConfig',
+    'telephonebill.apps.TelephoneBillConfig',
 ]
 
 MIDDLEWARE = [

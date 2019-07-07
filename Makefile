@@ -5,6 +5,7 @@ pipenv-setup-dev:
 	pipenv install --dev
 
 run-server:
+	python manage.py migrate --settings=callcalculator.settings.development
 	python manage.py runserver
 
 code-convention:
