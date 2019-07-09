@@ -22,14 +22,9 @@ class CallRecordSerializer(serializers.ModelSerializer):
         help_text='The timestamp a call was started or ended',
         read_only=True
     )
-    price = serializers.DecimalField(
-        max_digits=13, decimal_places=2,
-        help_text='The call price, calculated in the end record',
-        read_only=True
-    )
 
     class Meta:
         model = CallRecord
         fields = ('id', 'type', 'timestamp', 'call_id', 'source',
-                  'destination', 'price', )
-        read_only_fields = ('id', 'type', 'timestamp', 'call_id', 'price', )
+                  'destination', )
+        read_only_fields = ('id', 'type', 'timestamp', 'call_id', )

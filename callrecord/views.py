@@ -10,7 +10,6 @@ class CallStartRecordView(GenericAPIView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.TYPE = 'START'
 
     def post(self, request):
         """
@@ -22,7 +21,7 @@ class CallStartRecordView(GenericAPIView):
         source = request_data.get('source')
         destination = request_data.get('destination')
 
-        data = CallRecordService().insert(self.TYPE, source, destination)
+        data = CallRecordService().insert_call_start(source, destination)
         serializer = CallRecordSerializer(data)
 
         result = {'detail': 'Call start recorded successfully!',
@@ -35,7 +34,6 @@ class CallEndRecordView(GenericAPIView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.TYPE = 'END'
 
     def post(self, request):
         """
@@ -50,7 +48,7 @@ class CallEndRecordView(GenericAPIView):
         service = CallRecordService()
 
         # Save the call record
-        data = service.insert(self.TYPE, source, destination)
+        data = service.insert_call_end(source, destination)
 
         serializer = CallRecordSerializer(data)
 

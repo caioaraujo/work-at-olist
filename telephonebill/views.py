@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
@@ -25,7 +26,10 @@ class TelephoneBillView(GenericAPIView, ListModelMixin):
         month = request.GET.get('month')
         year = request.GET.get('year')
 
-        data = service.get_bill(phone, month, year)
+        data = service.get_telephone_bill(phone, month, year)
+        if not data:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         serializer = TelephoneBillSerializer(data, many=True)
 
         return Response(serializer.data)

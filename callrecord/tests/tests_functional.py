@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from telephonebill.models import TelephoneBill
 from .fixtures import Fixtures
 
 
@@ -23,7 +26,6 @@ class CallStartRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['type'], 'START')
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
-        self.assertIsNone(obtained_data['price'])
 
         timestamp = obtained_data['timestamp'].split('T')
         call_date = timestamp[0]
@@ -61,13 +63,28 @@ class CallEndRecordAPITests(APITestCase):
         self.assertEqual(obtained_data['type'], 'END')
         self.assertEqual(obtained_data['source'], source)
         self.assertEqual(obtained_data['destination'], destination)
-        self.assertEqual(obtained_data['price'], '13.50')
 
         timestamp = obtained_data['timestamp'].split('T')
         call_date = timestamp[0]
         self.assertEqual(call_date, '2012-01-02')
         call_time = timestamp[1]
         self.assertEqual(call_time, '08:27:13')
+
+        # Asserting the telephone bill
+        telephone_bill = (TelephoneBill.objects
+                          .filter(source=source, destination=destination))
+        self.assertTrue(telephone_bill.exists())
+        telephone_bill = telephone_bill.first()
+        self.assertEqual(str(telephone_bill.call_price), '13.50')
+        self.assertEqual(telephone_bill.call_duration, '03:15:54')
+        self.assertEqual(telephone_bill.year, 2012)
+        self.assertEqual(telephone_bill.month, 1)
+
+        expected_start_date = datetime(2012, 1, 2, 5, 11, 19)
+        self.assertEqual(
+            telephone_bill.call_start_date, expected_start_date.date())
+        self.assertEqual(
+            telephone_bill.call_start_time, expected_start_date.time())
 
     def test_post__not_acceptable(self):
         data = {'source': '1111111111', 'destination': '1111111111'}

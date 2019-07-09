@@ -7,4 +7,6 @@ class TelephoneBillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CallRecord
-        fields = '__all__'
+        fields = (
+            'destination', 'timestamp_start', 'duration',
+            'total_price', )

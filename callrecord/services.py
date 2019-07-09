@@ -1,8 +1,8 @@
-from datetime import timedelta
-
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import NotAcceptable, APIException
 
+from telephonebill.services import TelephoneBillService
 from .models import CallRecord
 
 
@@ -12,15 +12,12 @@ class CallRecordService:
     DESTINATION = 'Destination'
     START = 'START'
     END = 'END'
-    STANDING_CHARGE = 0.36
-    CHARGE_MINUTE = 0.09
 
-    def insert(self, call_record_type, source, destination):
+    def insert_call_start(self, source, destination):
         """
-        Save a new call record
+        Save a new call start record
 
         Args:
-            call_record_type: string 'START' or 'END'
             source: source phone number (string)
             destination: destination phone number (string)
 
@@ -28,6 +25,36 @@ class CallRecordService:
 
         """
 
+        return self._save_call(self.START, source, destination)
+
+    @transaction.atomic
+    def insert_call_end(self, source, destination):
+        """
+        Save a new call end and the telephone bill record
+
+        Args:
+            source: source phone number (string)
+            destination: destination phone number (string)
+
+        Returns: CallRecord model instance result
+
+        """
+
+        call_record = self._save_call(self.END, source, destination)
+
+        call_id = call_record.call_id
+        timestamp_start = (CallRecord.objects
+                           .values_list('timestamp', flat=True)
+                           .get(call_id=call_id, type=self.START))
+        timestamp_end = call_record.timestamp
+
+        telephone_bill_service = TelephoneBillService()
+        telephone_bill_service.save_telephone_bill(
+            source, destination, timestamp_start, timestamp_end)
+
+        return call_record
+
+    def _save_call(self, call_record_type, source, destination):
         self._validate_phone_number(source, self.SOURCE)
         self._validate_phone_number(destination, self.DESTINATION)
 
@@ -38,15 +65,10 @@ class CallRecordService:
         call_id = self._get_call_id(call_record_type, source, destination)
         timestamp = timezone.now()
 
-        price = None
-        if self.END == call_record_type:
-            # Calculate the call price if its the end record
-            price = self._calculate_call_price(call_id, timestamp)
-
         call_record = CallRecord(
             call_id=call_id, type=call_record_type,
             source=source, destination=destination,
-            timestamp=timestamp, price=price)
+            timestamp=timestamp)
 
         call_record.save()
 
@@ -102,46 +124,3 @@ class CallRecordService:
         if len(phone_number) > 11:
             raise NotAcceptable(
                 detail=f'{origin} must have a maximum of 11 numbers')
-
-    def _calculate_call_price(self, call_id, timestamp_end):
-        """
-        Calculate the call price
-
-        Args:
-            call_id: id which represents both start and end call
-            timestamp_end: the timestamp from the end of the call
-
-        Returns: The price in float
-
-        """
-
-        # Find the timestamp of the call start record
-        timestamp_start = self._get_call_timestamp(call_id, self.START)
-
-        # Find the total of minutes between these dates
-        diff_time = timestamp_end - timestamp_start
-        total_minutes = diff_time.seconds // 60
-
-        # Set zero to seconds from both dates
-        timestamp_start = self._set_zero_to_seconds(timestamp_start)
-        timestamp_end = self._set_zero_to_seconds(timestamp_end)
-
-        while timestamp_start <= timestamp_end:
-
-            if timestamp_start.hour > 21 or timestamp_start.hour < 6:
-                # Removes the minute if the interval is between
-                # the non-charged time (22h00 and 5h59)
-                total_minutes -= 1
-            # Increment one minute do timestamp_start
-            timestamp_start = timestamp_start + timedelta(minutes=1)
-
-        price = total_minutes * self.CHARGE_MINUTE + self.STANDING_CHARGE
-        return round(price, ndigits=2)
-
-    def _set_zero_to_seconds(self, timestamp):
-        return timestamp.replace(second=0, microsecond=0)
-
-    def _get_call_timestamp(self, call_id, call_type):
-        # Get the timestamp of the call by its call id and type (start/end)
-        return (CallRecord.objects.values_list('timestamp', flat=True)
-                .get(call_id=call_id, type=call_type))

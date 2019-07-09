@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.test import TestCase, SimpleTestCase
 from rest_framework.exceptions import NotAcceptable, APIException
 
@@ -34,7 +32,7 @@ class TestCallRecordService(TestCase):
 
         call_id = self.service._get_call_id(
             call_record_type, source, destination)
-        self.assertEqual(25, call_id)
+        self.assertEqual(22, call_id)
 
     def test_get_call_id__call_type_end(self):
         # Install fixtures
@@ -59,42 +57,6 @@ class TestCallRecordService(TestCase):
                 'and destination 2222222222'):
             self.service._get_call_id(
                 call_record_type, source, destination)
-
-    def test_calculate_call_price__between_tariff_periods(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        timestamp_end = datetime(2012, 1, 2, 22, 17, 53)
-        price = self.service._calculate_call_price(
-            call_id=21, timestamp_end=timestamp_end)
-        self.assertEqual(price, 0.54)
-
-    def test_calculate_call_price__less_than_one_minute(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        timestamp_end = datetime(2012, 1, 2, 7, 10, 59)
-        price = self.service._calculate_call_price(
-            call_id=22, timestamp_end=timestamp_end)
-        self.assertEqual(price, 0.36)
-
-    def test_calculate_call_price__exactly_one_minute(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        timestamp_end = datetime(2012, 1, 2, 7, 11, 2)
-        price = self.service._calculate_call_price(
-            call_id=23, timestamp_end=timestamp_end)
-        self.assertEqual(price, 0.45)
-
-    def test_calculate_call_price__over_one_minute(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        timestamp_end = datetime(2012, 1, 2, 7, 12, 1)
-        price = self.service._calculate_call_price(
-            call_id=24, timestamp_end=timestamp_end)
-        self.assertEqual(price, 0.45)
 
 
 class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
@@ -158,11 +120,11 @@ class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
             self.service._validate_phone_number(
                 '481111111111111111111', self.service.DESTINATION)
 
-    def test_validate_phone_number__same_number(self):
+    def test_save_call__same_number(self):
         source = '1111111111'
         destination = '1111111111'
 
         with self.assertRaisesMessage(
                 NotAcceptable,
                 'Source and destination must be different'):
-            self.service.insert('START', source, destination)
+            self.service._save_call('START', source, destination)
