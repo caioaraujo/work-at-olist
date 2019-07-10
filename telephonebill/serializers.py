@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from callrecord.models import CallRecord
+from .models import TelephoneBill
 
 
 class TelephoneBillSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = CallRecord
+        model = TelephoneBill
         fields = (
-            'destination', 'timestamp_start', 'duration',
-            'total_price', )
+            'destination', 'call_start_date', 'call_start_time',
+            'call_duration', 'call_price', )

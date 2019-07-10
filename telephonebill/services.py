@@ -1,5 +1,4 @@
-import time
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 
 from .models import TelephoneBill
 
@@ -30,7 +29,7 @@ class TelephoneBillService:
             source=source, destination=destination, call_price=call_price,
             call_start_date=timestamp_start.date(),
             call_start_time=timestamp_start.time(),
-            year=timestamp_start.year, month=timestamp_start.month,
+            year=timestamp_end.year, month=timestamp_end.month,
             call_duration=call_duration
         )
 
@@ -46,7 +45,7 @@ class TelephoneBillService:
             timestamp_start: datetime from the call start
             timestamp_end: datetime from the call end
 
-        Returns: time elapsed as time
+        Returns: time elapsed as string (eg 35:23:07)
 
         """
 
@@ -102,5 +101,46 @@ class TelephoneBillService:
         return timestamp.replace(second=0, microsecond=0)
 
     def get_telephone_bill(self, phone, month, year):
-        # FIXME
-        return TelephoneBill.objects.all()
+
+        period = self._get_period_filter(month, year)
+
+        return TelephoneBill.objects.filter(source=phone, **period)
+
+    def _get_period_filter(self, month, year):
+        # Return the period filter
+
+        period = {}
+
+        if year:
+            period['year'] = year
+        if month:
+            period['month'] = month
+
+            if not year:
+                # Month was sent, but not year.
+                # In this case get the year related to
+                # the last occurrence of the given month
+
+                current_day = date.today()
+                if int(month) > current_day.month:
+                    period['year'] = current_day.year - 1
+                else:
+                    period['year'] = current_day.year
+
+        if not month and not year:
+            # Month and year were not sent.
+            # In this case find the last month data
+
+            previous_month = self._get_date_from_previous_month()
+
+            period['month'] = previous_month.month
+            period['year'] = previous_month.year
+
+        return period
+
+    def _get_date_from_previous_month(self):
+        # Find the previous month date related to the first day of the
+        # current month
+        current_day = date.today()
+        first_day_of_current_month = current_day.replace(day=1)
+        return first_day_of_current_month - timedelta(days=1)
