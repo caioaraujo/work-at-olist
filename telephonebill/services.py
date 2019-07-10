@@ -77,25 +77,44 @@ class TelephoneBillService:
 
         """
 
+        # Transfer the past seconds from start timestamp to the
+        # end timestamp before count all minutes between then
+        start_seconds = 60 - timestamp_start.second
+        timestamp_end = timestamp_end + timedelta(seconds=start_seconds)
+        timestamp_start = timestamp_start + timedelta(seconds=start_seconds)
+
         # Find the total of minutes between these dates
         diff_time = timestamp_end - timestamp_start
         total_minutes = diff_time.seconds // 60
 
-        # Set zero to seconds from both dates
-        timestamp_start = self._set_zero_to_seconds(timestamp_start)
         timestamp_end = self._set_zero_to_seconds(timestamp_end)
 
-        while timestamp_start <= timestamp_end:
-
-            if timestamp_start.hour > 21 or timestamp_start.hour < 6:
-                # Removes the minute if the interval is between
-                # the non-charged time (22h00 and 5h59)
-                total_minutes -= 1
-            # Increment one minute do timestamp_start
-            timestamp_start = timestamp_start + timedelta(minutes=1)
+        non_charged_minutes = sum(self._generate_non_charged_minutes(
+            timestamp_start, timestamp_end))
+        total_minutes = total_minutes - non_charged_minutes
 
         price = total_minutes * self.CHARGE_MINUTE + self.STANDING_CHARGE
         return round(price, ndigits=2)
+
+    def _generate_non_charged_minutes(self, timestamp_start, timestamp_end):
+        # Generates all minutes in the non-charged interval (22h00 and 5h59)
+
+        while timestamp_start < timestamp_end:
+            start_hour = timestamp_start.hour
+
+            if (timestamp_start.date() == timestamp_end.date() and
+                    start_hour == timestamp_end.hour):
+                # If the hour is the same, the amount of left minutes
+                # is the amount of minutes past the end time
+                minutes = timestamp_end.minute
+
+            else:
+                minutes = 60 - timestamp_start.minute
+
+            if start_hour > 21 or start_hour < 6:
+                yield minutes
+            # Add these minutes to timestamp_start
+            timestamp_start = timestamp_start + timedelta(minutes=minutes)
 
     def _set_zero_to_seconds(self, timestamp):
         return timestamp.replace(second=0, microsecond=0)
@@ -109,23 +128,10 @@ class TelephoneBillService:
     def _get_period_filter(self, month, year):
         # Return the period filter
 
-        period = {}
+        period = {'year': self._get_year_filter(month, year)}
 
-        if year:
-            period['year'] = year
         if month:
             period['month'] = month
-
-            if not year:
-                # Month was sent, but not year.
-                # In this case get the year related to
-                # the last occurrence of the given month
-
-                current_day = date.today()
-                if int(month) > current_day.month:
-                    period['year'] = current_day.year - 1
-                else:
-                    period['year'] = current_day.year
 
         if not month and not year:
             # Month and year were not sent.
@@ -137,6 +143,20 @@ class TelephoneBillService:
             period['year'] = previous_month.year
 
         return period
+
+    def _get_year_filter(self, month, year):
+        if year:
+            return year
+
+        if month:
+            # Month was sent, but not year.
+            # In this case get the year related to
+            # the last occurrence of the given month
+
+            current_day = date.today()
+            if int(month) > current_day.month:
+                return current_day.year - 1
+            return current_day.year
 
     def _get_date_from_previous_month(self):
         # Find the previous month date related to the first day of the

@@ -75,7 +75,7 @@ class CallEndRecordAPITests(APITestCase):
                           .filter(source=source, destination=destination))
         self.assertTrue(telephone_bill.exists())
         telephone_bill = telephone_bill.first()
-        self.assertEqual(str(telephone_bill.call_price), '13.50')
+        self.assertEqual(str(telephone_bill.call_price), '13.59')
         self.assertEqual(telephone_bill.call_duration, '03:15:54')
         self.assertEqual(telephone_bill.year, 2012)
         self.assertEqual(telephone_bill.month, 1)
