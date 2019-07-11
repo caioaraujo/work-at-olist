@@ -16,11 +16,14 @@ Libraries:
 - Pipenv 2018.11.26
 - Django 2.2.3
 - Django REST Framework 3.9.4
+- gunicorn 19.9.0
+- django-heroku 0.3.1
+- whitenoise 4.1.2
 
 
 ## API Docs
 
-Run the application locally and access in /docs endpoint (eg http://127.0.0.1:8000/docs)
+https://caioaraujo-callcalculator.herokuapp.com/docs/
 
 ## Requirements
 

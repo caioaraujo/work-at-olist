@@ -105,8 +105,8 @@ class TelephoneBillService:
             if (timestamp_start.date() == timestamp_end.date() and
                     start_hour == timestamp_end.hour):
                 # If the hour is the same, the amount of left minutes
-                # is the amount of minutes past the end time
-                minutes = timestamp_end.minute
+                # is the difference between end and start minutes
+                minutes = timestamp_end.minute - timestamp_start.minute
 
             else:
                 minutes = 60 - timestamp_start.minute
