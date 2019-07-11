@@ -27,23 +27,12 @@ Run the application locally and access in /docs endpoint (eg http://127.0.0.1:80
 - [Python 3.6.8](https://www.python.org/downloads/release/python-368/)
 - [pip](https://pypi.org/project/pip/)
 
-or
-
-- [Docker](https://www.docker.com/)
-- [Docker compose](https://docs.docker.com/compose/install/)
-
 Optional:
 
 - [Pipenv](https://github.com/pypa/pipenv)
 - [Make](https://www.gnu.org/software/make/)
 
 ## Setup
-
-### Docker compose
-
-`docker-compose up --build`
-
-### Local
 
 For a local setup, the most convenient way is by installing all dependencies via pipenv:
 
@@ -86,3 +75,7 @@ This project uses flake8 checking. Install all development dependencies and run:
 or
 
 `make code-convention`
+
+### Heroku
+
+https://caioaraujo-callcalculator.herokuapp.com/

@@ -10,7 +10,7 @@ SECRET_KEY = 'cnomvl^^xh_xsc)ke-hfkj&j5hfa%gjc^-aobdkv*0v_(e!k##'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'caioaraujo-callcalculator.herokuapp.com']
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
