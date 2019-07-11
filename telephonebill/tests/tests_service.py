@@ -45,6 +45,14 @@ class TestTelephoneBillServiceWithoutDBConnection(SimpleTestCase):
             timestamp_end=timestamp_end)
         self.assertEqual(price, 0.45)
 
+    def test_calculate_call_price__non_charge_time(self):
+        timestamp_start = datetime(2012, 1, 2, 22, 10, 2)
+        timestamp_end = datetime(2012, 1, 2, 22, 14, 1)
+        price = self.service._calculate_call_price(
+            timestamp_start=timestamp_start,
+            timestamp_end=timestamp_end)
+        self.assertEqual(price, 0.36)
+
     def test_set_zero_to_seconds(self):
         timestamp = datetime(2019, 1, 1, 13, 48, 34)
         expected_timestamp = datetime(2019, 1, 1, 13, 48, 0)
