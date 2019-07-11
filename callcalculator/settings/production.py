@@ -1,4 +1,8 @@
 from .common import *
+import django_heroku
+
+# Activate Django-Heroku.
+django_heroku.settings(locals())
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'cnomvl^^xh_xsc)ke-hfkj&j5hfa%gjc^-aobdkv*0v_(e!k##'

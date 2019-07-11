@@ -12,6 +12,9 @@ freezegun = "==0.3.12"
 django = "==2.2.3"
 djangorestframework = "==3.9.4"
 drf-yasg = "==1.16.0"
+gunicorn = "==19.9.0"
+django-heroku = "==0.3.1"
+whitenoise = "==4.1.2"
 
 [requires]
 python_version = "3.6.8"
