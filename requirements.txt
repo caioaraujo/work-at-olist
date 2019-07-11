@@ -1,0 +1,9 @@
+django==2.2.3
+djangorestframework==3.9.4
+drf-yasg==1.16.0
+gunicorn==19.9.0
+django-heroku==0.3.1
+whitenoise==4.1.2
+flake8==3.6.0
+model-mommy==1.6.0
+freezegun==0.3.12
