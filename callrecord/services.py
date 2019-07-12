@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.utils import timezone
 from rest_framework.exceptions import NotAcceptable, APIException
 
 from telephonebill.services import TelephoneBillService
@@ -10,42 +9,54 @@ class CallRecordService:
 
     SOURCE = 'Source'
     DESTINATION = 'Destination'
+    CALL_ID = 'Call id'
+    TIMESTAMP = 'Timestamp'
     START = 'START'
     END = 'END'
 
-    def insert_call_start(self, source, destination):
+    def insert_call_start(self, source, destination, call_id, timestamp):
         """
         Save a new call start record
 
         Args:
             source: source phone number (string)
             destination: destination phone number (string)
+            call_id: unique id that identifies start and end call (int)
+            timestamp: timestamp of the call record
 
         Returns: CallRecord model instance result
 
         """
+        self._validate_source_and_destination(source, destination)
+        self._validate_call_id(call_id)
+        self._validate_required_data(timestamp, self.TIMESTAMP)
 
-        return self._save_call(self.START, source, destination)
+        return self._save_call(
+            self.START, source, destination, call_id, timestamp)
 
     @transaction.atomic
-    def insert_call_end(self, source, destination):
+    def insert_call_end(self, call_id, timestamp):
         """
         Save a new call end and the telephone bill record
 
         Args:
-            source: source phone number (string)
-            destination: destination phone number (string)
+            call_id: unique id that identifies start and end call (int)
+            timestamp: timestamp of the call record
 
         Returns: CallRecord model instance result
 
         """
+        self._validate_required_data(call_id, self.CALL_ID)
+        self._validate_required_data(timestamp, self.TIMESTAMP)
 
-        call_record = self._save_call(self.END, source, destination)
+        start_call = self._get_start_call_by_call_id(call_id)
+        source = start_call.source
+        destination = start_call.destination
 
-        call_id = call_record.call_id
-        timestamp_start = (CallRecord.objects
-                           .values_list('timestamp', flat=True)
-                           .get(call_id=call_id, type=self.START))
+        call_record = self._save_call(
+            self.END, source, destination, call_id, timestamp)
+
+        timestamp_start = start_call.timestamp
         timestamp_end = call_record.timestamp
 
         telephone_bill_service = TelephoneBillService()
@@ -54,16 +65,19 @@ class CallRecordService:
 
         return call_record
 
-    def _save_call(self, call_record_type, source, destination):
-        self._validate_phone_number(source, self.SOURCE)
-        self._validate_phone_number(destination, self.DESTINATION)
+    def _get_start_call_by_call_id(self, call_id):
+        """ Get the CallRecord model instance from the start call """
+        start_call = (CallRecord.objects
+                      .filter(call_id=call_id, type=self.START))
 
-        if source == destination:
-            raise NotAcceptable(
-                detail='Source and destination must be different')
+        if not start_call.exists():
+            raise APIException(
+                detail=f'Start record not found for call id {call_id}')
 
-        call_id = self._get_call_id(call_record_type, source, destination)
-        timestamp = timezone.now()
+        return start_call.first()
+
+    def _save_call(self, call_record_type, source, destination,
+                   call_id, timestamp):
 
         call_record = CallRecord(
             call_id=call_id, type=call_record_type,
@@ -72,50 +86,21 @@ class CallRecordService:
 
         call_record.save()
 
-        return call_record
+        return CallRecord.objects.get(id=call_record.id)
 
-    def _get_call_id(self, call_record_type, source, destination):
-        """ Returns a new call id when call_record_type is 'START'. Otherwise,
-            find the call id from the last call record start between the source
-            and destination.
-         """
+    def _validate_source_and_destination(self, source, destination):
+        self._validate_phone_number(source, self.SOURCE)
+        self._validate_phone_number(destination, self.DESTINATION)
 
-        if self.START == call_record_type:
-            return self._get_call_id_start()
-
-        return self._get_call_id_end(source, destination)
-
-    def _get_call_id_start(self):
-        # Find the last call id from a call start record
-        last_call_id = (CallRecord.objects
-                        .values_list('call_id', flat=True)
-                        .order_by('id').last())
-        if not last_call_id:
-            # It is the first call record in the database
-            return 1
-        return last_call_id + 1
-
-    def _get_call_id_end(self, source, destination):
-        # Find the call id from the last call start between source
-        # and destination
-        last_call_id = (CallRecord.objects
-                        .values_list('call_id', flat=True)
-                        .filter(source=source, destination=destination)
-                        .order_by('id').last())
-
-        if not last_call_id:
-            raise APIException(
-                detail=f'Start record not found for source {source} '
-                f'and destination {destination}')
-
-        return last_call_id
+        if source == destination:
+            raise NotAcceptable(
+                detail='Source and destination must be different')
 
     def _validate_phone_number(self, phone_number, origin):
         """
-        Validate phone number data from source and destination (origin)
+        Validate source and destination phone numbers
         """
-        if not phone_number:
-            raise NotAcceptable(detail=f'{origin} is required')
+        self._validate_required_data(phone_number, origin)
         if not phone_number.isdigit():
             raise NotAcceptable(detail=f'{origin} must be numeric')
         if len(phone_number) < 10:
@@ -124,3 +109,19 @@ class CallRecordService:
         if len(phone_number) > 11:
             raise NotAcceptable(
                 detail=f'{origin} must have a maximum of 11 numbers')
+
+    def _validate_required_data(self, value, field):
+
+        if not value:
+            raise NotAcceptable(detail=f'{field} is required')
+
+    def _validate_call_id(self, call_id):
+        """ Validate call id data """
+
+        self._validate_required_data(call_id, self.CALL_ID)
+
+        query = CallRecord.objects.filter(call_id=call_id)
+
+        if query.exists():
+            raise NotAcceptable(
+                detail='Call id is already in use. Please, choose another')

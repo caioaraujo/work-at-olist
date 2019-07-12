@@ -13,50 +13,47 @@ class TestCallRecordService(TestCase):
     def setUp(self):
         self.service = CallRecordService()
 
-    def test_get_call_id__first_database_record(self):
-        call_record_type = 'START'
-        source = '2222222'
-        destination = '111111'
-
-        call_id = self.service._get_call_id(
-            call_record_type, source, destination)
-        self.assertEqual(1, call_id)
-
-    def test_get_call_id__call_type_start(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        call_record_type = 'START'
-        source = '2222222222'
-        destination = '1111111111'
-
-        call_id = self.service._get_call_id(
-            call_record_type, source, destination)
-        self.assertEqual(22, call_id)
-
-    def test_get_call_id__call_type_end(self):
-        # Install fixtures
-        Fixtures.create_call_record_fixtures()
-
-        call_record_type = 'END'
-        source = '1111111111'
-        destination = '2222222222'
-
-        call_id = self.service._get_call_id(
-            call_record_type, source, destination)
-        self.assertEqual(9, call_id)
-
-    def test_get_call_id__start_call_not_found(self):
-        call_record_type = 'END'
-        source = '1111111111'
-        destination = '2222222222'
+    def test_start_call_by_call_id__not_found(self):
+        call_id = 99
 
         with self.assertRaisesMessage(
                 APIException,
-                'Start record not found for source 1111111111 '
-                'and destination 2222222222'):
-            self.service._get_call_id(
-                call_record_type, source, destination)
+                'Start record not found for call id 99'):
+            self.service._get_start_call_by_call_id(call_id)
+
+    def test_start_call_by_call_id__success(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        call_id = 9
+
+        start_call = self.service._get_start_call_by_call_id(call_id)
+        self.assertEqual(start_call.id, 1)
+
+    def test_insert_call_end__call_id_required(self):
+        with self.assertRaisesMessage(
+                NotAcceptable, 'Call id is required'):
+            self.service.insert_call_end(None, 'aaa')
+
+    def test_insert_call_end__timestamp_required(self):
+        with self.assertRaisesMessage(
+                NotAcceptable, 'Timestamp is required'):
+            self.service.insert_call_end(22, None)
+
+    def test_validate_call_id__already_in_use(self):
+        # Install fixtures
+        Fixtures.create_call_record_fixtures()
+
+        with self.assertRaisesMessage(
+                NotAcceptable,
+                'Call id is already in use. Please, choose another'):
+            self.service._validate_call_id(9)
+
+    def test_insert_call_start__timestamp_required(self):
+        with self.assertRaisesMessage(
+                NotAcceptable, 'Timestamp is required'):
+            self.service.insert_call_start(
+                '1111111111', '22222222222', 22, None)
 
 
 class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
@@ -120,11 +117,16 @@ class TestCallRecordServiceWithoutDBConnection(SimpleTestCase):
             self.service._validate_phone_number(
                 '481111111111111111111', self.service.DESTINATION)
 
-    def test_save_call__same_number(self):
+    def test_insert_call_start__same_number(self):
         source = '1111111111'
         destination = '1111111111'
 
         with self.assertRaisesMessage(
                 NotAcceptable,
                 'Source and destination must be different'):
-            self.service._save_call('START', source, destination)
+            self.service.insert_call_start(source, destination, 1, 'aaa')
+
+    def test_validate_call_id__required(self):
+        with self.assertRaisesMessage(
+                NotAcceptable, 'Call id is required'):
+            self.service._validate_call_id(None)
