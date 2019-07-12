@@ -1,5 +1,6 @@
 from .common import *
 import django_heroku
+import dj_database_url
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
@@ -15,9 +16,4 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'caioaraujo-callcalculator.herokuapp.
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'prod.sqlite3'),
-    }
-}
+DATABASES = {'default': dj_database_url.config()}
