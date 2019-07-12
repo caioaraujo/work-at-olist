@@ -8,7 +8,7 @@ django_heroku.settings(locals())
 SECRET_KEY = os.environ.get('TOP_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'caioaraujo-callcalculator.herokuapp.com']
 
