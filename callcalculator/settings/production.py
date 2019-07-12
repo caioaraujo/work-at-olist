@@ -5,7 +5,7 @@ import django_heroku
 django_heroku.settings(locals())
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'cnomvl^^xh_xsc)ke-hfkj&j5hfa%gjc^-aobdkv*0v_(e!k##'
+SECRET_KEY = os.environ.get('TOP_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False

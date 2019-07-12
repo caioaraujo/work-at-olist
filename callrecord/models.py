@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class CallRecord(models.Model):
@@ -9,7 +8,7 @@ class CallRecord(models.Model):
 
     id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=5, choices=TYPE_CHOICES)
-    timestamp = models.DateTimeField(default=timezone.now)
+    timestamp = models.DateTimeField()
     call_id = models.PositiveIntegerField()
     source = models.CharField(max_length=11)
     destination = models.CharField(max_length=11)
